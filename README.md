@@ -1,6 +1,6 @@
 # hardhat-yul
 
-[![npm](https://img.shields.io/npm/v/@tovarishfin/hardhat-yul.svg)](https://www.npmjs.com/package/@tovarishfin/hardhat-yul) [![hardhat](https://hardhat.org/buidler-plugin-badge.svg?1)](https://hardhat.org)
+[![npm](https://img.shields.io/npm/v/@tovarishfin/hardhat-yul.svg)](https://www.npmjs.com/package/@skybit/hardhat-yul)
 
 [Hardhat](https://hardhat.org) plugin to develop smart contracts with Yul and/or Yul+.
 
@@ -17,19 +17,19 @@ The Yul+ compiler is run using the [Yul+ transpiler from FuelLabs](https://githu
 First, you need to install the plugin by running
 
 ```bash
-npm install --save-dev @tovarishfin/hardhat-yul
+yarn add -D @skybit/hardhat-yul
 ```
 
 And add the following statement to your `hardhat.config.js`:
 
 ```js
-require("@tovarishfin/hardhat-yul");
+require("@skybit/hardhat-yul");
 ```
 
 Or, if you are using TypeScript, add this to your `hardhat.config.ts`:
 
 ```ts
-import "@tovarishfin/hardhat-yul";
+import "@skybit/hardhat-yul";
 ```
 
 ## Required plugins
@@ -54,5 +54,6 @@ There are no additional steps you need to take for this plugin to work.
 
 ### Additional notes
 
-This is a fork of [ControlCplusControlV's work](https://github.com/ControlCplusControlV/hardhat-Yul) which no longer seems to be working.
-There are no tests for this plugin and there are no plans for it :)
+This is a fork of [@TovarishFin/hardhat-yul](https://github.com/TovarishFin/hardhat-yul) which no longer seems to be maintained and is not open for issues.
+
+
