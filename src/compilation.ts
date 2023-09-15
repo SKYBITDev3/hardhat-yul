@@ -1,4 +1,4 @@
-import { Artifact, Artifacts, ProjectPathsConfig } from "hardhat/types";
+import { Artifact, Artifacts, ProjectPathsConfig, HardhatConfig, SolcConfig } from "hardhat/types";
 import type { Artifacts as ArtifactsImpl } from "hardhat/internal/artifacts";
 import { localPathToSourceName } from "hardhat/utils/source-names";
 import path from "path";
@@ -9,21 +9,20 @@ import { YulConfig } from "./types";
 import util from "util";
 
 export async function compileYul(
-  _yulConfig: YulConfig,
-  paths: ProjectPathsConfig,
+  config: HardhatConfig,
   artifacts: Artifacts
 ) {
-  const files = await getYulSources(paths);
+  const files = await getYulSources(config.paths);
 
   const allArtifacts = [];
   for (const file of files) {
     const cwdPath = path.relative(process.cwd(), file);
 
-    console.log(`Compiling ${cwdPath}...`);
+    console.log(`Compiling ${cwdPath} using solc version ${solc.version()}...`);
 
-    const yulOutput = await _compileYul(cwdPath, file);
+    const yulOutput = await _compileYul(cwdPath, file, config.solidity.compilers[0]);
 
-    const sourceName = await localPathToSourceName(paths.root, file);
+    const sourceName = await localPathToSourceName(config.paths.root, file);
     const artifact = getArtifactFromYulOutput(sourceName, yulOutput);
 
     await artifacts.saveArtifactAndDebugFile(artifact);
@@ -62,14 +61,14 @@ export async function compileYulp(
 
 async function getYulSources(paths: ProjectPathsConfig) {
   const glob = await import("glob");
-  const yulFiles = glob.sync(path.join(paths.sources, "**", "*.yul"));
+  const yulFiles = glob.sync(path.join(paths.sources, "**", "*.yul").split(path.sep).join("/"));
 
   return yulFiles;
 }
 
 async function getYulpSources(paths: ProjectPathsConfig) {
   const glob = await import("glob");
-  const yulpFiles = glob.sync(path.join(paths.sources, "**", "*.yulp"));
+  const yulpFiles = glob.sync(path.join(paths.sources, "**", "*.yulp").split(path.sep).join("/"));
 
   return yulpFiles;
 }
@@ -94,24 +93,28 @@ function getArtifactFromYulOutput(sourceName: string, output: any): Artifact {
   };
 }
 
-async function _compileYul(filepath: string, filename: string) {
+async function _compileYul(filepath: string, filename: string, compiler: SolcConfig) {
   const data = fs.readFileSync(filepath, "utf8");
+
+  const solcInput = {
+    language: "Yul",
+    sources: { "Target.yul": { content: data } },
+    settings: {
+      outputSelection: { "*": { "*": ["*"], "": ["*"] } },
+      optimizer: {
+        enabled: true,
+        runs: 0,
+        details: { yul: true, },
+      },
+    },
+  }
+
+  if (Object.hasOwn(compiler, 'settings')) solcInput.settings = { ...solcInput.settings, ...compiler.settings } // merge with settings in user's hardhat.config.js
+  solcInput.settings.optimizer.details = { yul: true } // make sure yul optimization is enabled in case it was overwritten
+
   const output = JSON.parse(
     solc.compile(
-      JSON.stringify({
-        language: "Yul",
-        sources: { "Target.yul": { content: data } },
-        settings: {
-          outputSelection: { "*": { "*": ["*"], "": ["*"] } },
-          optimizer: {
-            enabled: true,
-            runs: 0,
-            details: {
-              yul: true,
-            },
-          },
-        },
-      })
+      JSON.stringify(solcInput)
     )
   );
   if (output.errors && output.errors.length > 0) {
@@ -128,7 +131,7 @@ async function _compileYul(filepath: string, filename: string) {
   const bytecode =
     "0x" +
     output.contracts["Target.yul"][contractObjects[0]]["evm"]["bytecode"][
-      "object"
+    "object"
     ];
   const contractCompiled = {
     _format: "hh-sol-artifact-1",
@@ -175,7 +178,7 @@ async function _compileYulp(filepath: string, filename: string) {
   const bytecode =
     "0x" +
     output.contracts["Target.yul"][contractObjects[0]]["evm"]["bytecode"][
-      "object"
+    "object"
     ];
   const abi = source.signatures
     .map((v: any) => v.abi.slice(4, -1))

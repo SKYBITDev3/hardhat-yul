@@ -4,7 +4,7 @@ import { extendConfig, subtask } from "hardhat/internal/core/config/config-env";
 import { TASK_COMPILE_YUL, TASK_COMPILE_YULP } from "./task-names";
 import "./type-extensions";
 
-extendConfig((config) => {
+extendConfig((config, userConfig) => {
   const defaultConfig = { version: "latest" };
   config.yul = { ...defaultConfig, ...config.yul };
 });
@@ -21,7 +21,7 @@ subtask(
 // handle the newly added compile:yul
 subtask(TASK_COMPILE_YUL, async (_flags, { config, artifacts }) => {
   const { compileYul } = await import("./compilation");
-  await compileYul(config.yul, config.paths, artifacts);
+  await compileYul(config, artifacts);
 });
 
 // handle the newly added compile:yulp tasks
