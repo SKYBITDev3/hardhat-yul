@@ -108,9 +108,9 @@ async function _compileYul(filepath: string, filename: string, compiler: SolcCon
       },
     },
   }
-
-  if (Object.hasOwn(compiler, 'settings')) solcInput.settings = { ...solcInput.settings, ...compiler.settings } // merge with settings in user's hardhat.config.js
+  solcInput.settings = { ...solcInput.settings, ...compiler.settings } // merge with settings in user's hardhat.config.js
   solcInput.settings.optimizer.details = { yul: true } // make sure yul optimization is enabled in case it was overwritten
+  console.log(`solc settings: ${JSON.stringify(solcInput.settings)}`)
 
   const output = JSON.parse(
     solc.compile(
