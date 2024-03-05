@@ -34,21 +34,20 @@ export async function compileYul(
 }
 
 export async function compileYulp(
-  _yulConfig: YulConfig,
-  paths: ProjectPathsConfig,
+  config: HardhatConfig,
   artifacts: Artifacts
 ) {
-  const files = await getYulpSources(paths);
+  const files = await getYulpSources(config.paths);
 
   const allArtifacts = [];
   for (const file of files) {
     const cwdPath = path.relative(process.cwd(), file);
 
-    console.log(`Compiling ${cwdPath}...`);
+    console.log(`Compiling ${cwdPath} using solc version ${solc.version()}...`);
 
-    const yulOutput = await _compileYulp(cwdPath, file);
+    const yulOutput = await _compileYulp(cwdPath, file, config.solidity.compilers[0]);
 
-    const sourceName = await localPathToSourceName(paths.root, file);
+    const sourceName = await localPathToSourceName(config.paths.root, file);
     const artifact = getArtifactFromYulOutput(sourceName, yulOutput);
 
     await artifacts.saveArtifactAndDebugFile(artifact);
@@ -143,25 +142,29 @@ async function _compileYul(filepath: string, filename: string, compiler: SolcCon
   return contractCompiled;
 }
 
-async function _compileYulp(filepath: string, filename: string) {
+async function _compileYulp(filepath: string, filename: string, compiler: SolcConfig) {
   const data = fs.readFileSync(filepath, "utf8");
   const source = yulp.compile(data);
+
+  const solcInput = {
+    language: "Yul",
+    sources: { "Target.yul": { content: yulp.print(source.results) } },
+    settings: {
+      outputSelection: { "*": { "*": ["*"], "": ["*"] } },
+      optimizer: {
+        enabled: true,
+        runs: 0,
+        details: { yul: true, },
+      },
+    },
+  }
+  solcInput.settings = { ...solcInput.settings, ...compiler.settings } // merge with settings in user's hardhat.config.js
+  solcInput.settings.optimizer.details = { yul: true } // make sure yul optimization is enabled in case it was overwritten
+  console.log(`solc settings: ${JSON.stringify(solcInput.settings)}`)
+
   const output = JSON.parse(
     solc.compile(
-      JSON.stringify({
-        language: "Yul",
-        sources: { "Target.yul": { content: yulp.print(source.results) } },
-        settings: {
-          outputSelection: { "*": { "*": ["*"], "": ["*"] } },
-          optimizer: {
-            enabled: true,
-            runs: 0,
-            details: {
-              yul: true,
-            },
-          },
-        },
-      })
+      JSON.stringify(solcInput)
     )
   );
   if (output.errors && output.errors.length > 0) {
