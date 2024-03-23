@@ -5,7 +5,6 @@ import path from "path";
 import solc from "solc";
 import yulp from "yulp";
 import * as fs from "fs";
-import { YulConfig } from "./types";
 import util from "util";
 
 export async function compileYul(
@@ -18,7 +17,13 @@ export async function compileYul(
   for (const file of files) {
     const cwdPath = path.relative(process.cwd(), file);
 
-    console.log(`Compiling ${cwdPath} using solc version ${solc.version()}...`);
+    const hardhatConfigSolcVersion = config.solidity.compilers[0].version
+    if(!solc.version().includes(hardhatConfigSolcVersion)) {
+      console.log(`Your hardhat config specifies solc version ${hardhatConfigSolcVersion} but it was not found as a package in your repository. It's required to compile yul files. Install it by running yarn add solc@${hardhatConfigSolcVersion}.`)
+      return
+    }
+
+    console.log(`Compiling ${cwdPath} using solc version ${solc.version()}...`); // e.g. 0.8.24+commit.e11b9ed9.Emscripten.clang
 
     const yulOutput = await _compileYul(cwdPath, file, config.solidity.compilers[0]);
 
@@ -43,7 +48,13 @@ export async function compileYulp(
   for (const file of files) {
     const cwdPath = path.relative(process.cwd(), file);
 
-    console.log(`Compiling ${cwdPath} using solc version ${solc.version()}...`);
+    const hardhatConfigSolcVersion = config.solidity.compilers[0].version
+    if(!solc.version().includes(hardhatConfigSolcVersion)) {
+      console.log(`Your hardhat config specifies solidity compiler version ${hardhatConfigSolcVersion} but it was not found as a package in your repository. To compile yul files the installed solc version must match the solidity compiler version specified in hardhat.config.js. You can either install the correct version of solc by running 'yarn add solc@${hardhatConfigSolcVersion}', or update the version specified in hardhat.config.js to match whatever solc version is installed in your repository.`)
+      return
+    }
+
+    console.log(`Compiling ${cwdPath} using solc version ${solc.version()}...`); // e.g. 0.8.24+commit.e11b9ed9.Emscripten.clang
 
     const yulOutput = await _compileYulp(cwdPath, file, config.solidity.compilers[0]);
 
