@@ -14,10 +14,10 @@ The Yul+ compiler is run using the [Yul+ transpiler from FuelLabs](https://githu
 
 ## Installation
 
-First, you need to install the plugin by running
+First, you need to install the plugin and solc by running
 
 ```bash
-yarn add -D @skybit/hardhat-yul
+yarn add -D @skybit/hardhat-yul solc
 ```
 
 And add the following statement to your `hardhat.config.js`:
@@ -56,4 +56,4 @@ There are no additional steps you need to take for this plugin to work.
 
 This is a fork of [@TovarishFin/hardhat-yul](https://github.com/TovarishFin/hardhat-yul) which no longer seems to be maintained and is not open for issues.
 
-
+As of v4.2.0 solc has been made a peer dependency so that whatever version of solc that you choose to install in your own repository will be used to compile the yul files.

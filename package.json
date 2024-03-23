@@ -1,6 +1,6 @@
 {
   "name": "@skybit/hardhat-yul",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "description": "Compile Yul smart contracts in Hardhat",
   "repository": {
     "type": "git",
